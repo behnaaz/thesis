@@ -5,11 +5,14 @@ import java.util.function.Consumer;
 import java.util.List;
 public class Test {
     public static void main(final String... args) {
+	class Event {}
 	class Task {
 		final String name;
 		Task(final String name) {this.name = name;}
 		String getName() { return name; }
 		boolean isCompensible() { return new Random().nextBoolean(); }
+		Task getCompensation() { return new Task("COMP"+new Random().nextInt()); }
+		List<Event> getCancelEvents() { List<Event> el = new ArrayList<Event>(); el.add(new Event()); return el; }
 	}
 	class Transaction {
 		final List<Task> tasks;
@@ -21,6 +24,12 @@ public class Test {
 		BPMN(final List<Transaction> transactions){ this.transactions = transactions; }
 		List<Transaction> getTransactions() { return transactions; }
 		final void createMessageEvent(final Task t, final Transaction x) {
+			Task k = new Task("BBBB"+new Random().nextInt());
+			transactions.stream().findFirst().ifPresent(e -> e.getTasks().add(k));
+			System.out.println("create message event");
+		}
+		final void handleCancelEvent(final Event v, final Transaction x, final Task t) {
+			System.out.println("handle cancel event");
 		}
 	}
 
@@ -47,15 +56,16 @@ public class Test {
        .stream()
        .filter(a -> a.isCompensible())
        .forEach(k -> {
-          p.createMessageEvent(k, x);//???
-      //    t.getCancelEvents()
-          // .forEach(v -> 
-           System.out.println(k); //   handleCancelEvent(v, x, a.compensation, ts)
+          p.createMessageEvent(k, x);
+          k.getCancelEvents()
+           .forEach(v -> 
+             p.handleCancelEvent(v, x, k.getCompensation())
+          );
         })
     ); return p;};
 
-   // print.accept(b);
+    print.accept(b);
     BPMN c = refine.apply(b);
-   // print.accept(c);
+    print.accept(c);
   }
 }
