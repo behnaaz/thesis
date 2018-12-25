@@ -24,8 +24,10 @@ public class Test {
 		}
 	}
 
-	List<Task> l = List.of(new Task("s"), new Task("r"));
-	l.add(new Task("d"));
+	 List<Task> l = new ArrayList<>();
+         l.add(new Task("s"));
+         l.add(new Task("r"));
+	 l.add(new Task("d"));
 
 	Transaction t = new Transaction(l);
 	List<Transaction> n = new ArrayList<>();
