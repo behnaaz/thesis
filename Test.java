@@ -20,11 +20,11 @@ public class Test {
 		final List<Transaction> transactions;
 		BPMN(final List<Transaction> transactions){ this.transactions = transactions; }
 		List<Transaction> getTransactions() { return transactions; }
+		final void createMessageEvent(final Task t, final Transaction x) {
+		}
 	}
 
-	List<Task> l = new ArrayList<>();
-	l.add(new Task("s"));
-	l.add(new Task("r"));
+	List<Task> l = List.of(new Task("s"), new Task("r"));
 	l.add(new Task("d"));
 
 	Transaction t = new Transaction(l);
@@ -45,16 +45,15 @@ public class Test {
        .stream()
        .filter(a -> a.isCompensible())
        .forEach(k -> {
-    //      createMessageEvents(t, x);//???
+          p.createMessageEvent(k, x);//???
       //    t.getCancelEvents()
           // .forEach(v -> 
            System.out.println(k); //   handleCancelEvent(v, x, a.compensation, ts)
         })
     ); return p;};
 
-    print.accept(b);
+   // print.accept(b);
     BPMN c = refine.apply(b);
-    print.accept(c);
+   // print.accept(c);
   }
 }
-
