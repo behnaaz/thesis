@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.ListIterator;
 import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Consumer;
@@ -23,9 +24,9 @@ public class Test {
 		final List<Transaction> transactions;
 		BPMN(final List<Transaction> transactions){ this.transactions = transactions; }
 		List<Transaction> getTransactions() { return transactions; }
-		final void createMessageEvent(final Task t, final Transaction x) {
+		final void createMessageEvent(final Task t, final ListIterator i) {
 			Task k = new Task("BBBB"+new Random().nextInt());
-			transactions.stream().findFirst().ifPresent(e -> e.getTasks().add(k));
+			i.add(k);
 			System.out.println("create message event");
 		}
 		final void handleCancelEvent(final Event v, final Transaction x, final Task t) {
@@ -49,23 +50,28 @@ public class Test {
 		bpmn.getTransactions().forEach(e -> e.getTasks().stream().filter(f -> !"Z".equals(f.getName())).forEach(f -> System.out.println(f.getName())));
 		System.out.println("---------------------------------------------------------");
     	};
-       Function<BPMN, BPMN> refine = p -> {
-  p.getTransactions()
-   .forEach(x ->
-      x.getTasks()
-       .stream()
-       .filter(a -> a.isCompensible())
-       .forEach(k -> {
-          p.createMessageEvent(k, x);
-          k.getCancelEvents()
-           .forEach(v -> 
-             p.handleCancelEvent(v, x, k.getCompensation())
-          );
-        })
-    ); return p;};
+
 
     print.accept(b);
-    BPMN c = refine.apply(b);
-    print.accept(c);
+
+	ListIterator<Transaction> ix = b.getTransactions().listIterator(); 
+	while (ix.hasNext()) {
+		Transaction x = ix.next();
+		ListIterator<Task> ik = t.getTasks().listIterator();
+		while (ik.hasNext()) {
+			Task k = ik.next();
+			if (k.isCompensible()) {
+          			b.createMessageEvent(k, ik);
+				ListIterator<Event> iv = k.getCancelEvents().listIterator(); 
+				while (iv.hasNext()) {
+					Event v = iv.next();
+             				b.handleCancelEvent(v, x, k.getCompensation());
+				}
+			}
+		}	
+
+	}
+
+    print.accept(b);
   }
 }
