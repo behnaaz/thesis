@@ -6,8 +6,15 @@ import java.util.function.Consumer;
 import java.util.List;
 public class Test {
     public static void main(final String... args) {
-	class Event {}
-	class Task {
+	class Node { 
+		List<Node> getNexts() { return new ArrayList<Node>(); }
+	}
+        class Gateway extends Node {}	    
+        class ForkGateway extends Gateway {}	    
+	class Event extends Node {}
+	class SendMessageEvent extends Event {}
+	class ReceiveMessageEvent extends Event {}
+	class Task extends Node {
 		final String name;
 		Task(final String name) {this.name = name;}
 		String getName() { return name; }
@@ -15,7 +22,7 @@ public class Test {
 		Task getCompensation() { return new Task("COMP"+new Random().nextInt()); }
 		List<Event> getCancelEvents() { List<Event> el = new ArrayList<Event>(); el.add(new Event()); return el; }
 	}
-	class Transaction {
+	class Transaction extends Node {
 		final List<Task> tasks;
 		Transaction(final List<Task> tasks) { this.tasks = tasks; }
 		List<Task> getTasks() {	return tasks; }
@@ -28,6 +35,36 @@ public class Test {
 			Task k = new Task("BBBB"+new Random().nextInt());
 			i.add(k);
 			System.out.println("create message event");
+
+			//Create a message event to indicates the task is done
+ 			Event doneSendEvent = new SendMessageEvent();
+  			i.add(doneSendEvent);
+			  //Place the message event after the task
+  			if (k.getNexts().isEmpty()) {
+			    k.getNexts().add(doneSendEvent);
+ 			} else {
+    				Gateway gf = new ForkGateway();
+    				i.add(gf);
+			        gf.getNexts().addAll(k.getNexts());
+    				gf.getNexts().forEach(g ->
+      					g.getNexts().add(doneSendEvent)
+				);
+			    k.getNexts().add(gf);
+  
+		        Event doneReceiveEvent = new ReceiveMessageEvent();
+  			i.add(doneReceiveEvent);
+  			//doneCmpnsRcvMsgEvs 
+			//////receiveCompensatesDone.get(k) = doneSendEvent;
+		        // Indicating end of compensation
+  			Event compensationDoneSendEvent = new SendMessageEvent();
+  			i.add(compensationDoneSendEvent);
+  			Event compensationDoneReceiveEvent = new ReceiveMessageEvent();
+  //receiveCompensatesDone.get(k) = compensationDoneReceiveEvent;
+  i.add(compensationDoneReceiveEvent);
+  k.getCompensation().getNexts().add(compensationDoneSendEvent);
+}
+
+
 		}
 		final void handleCancelEvent(final Event v, final Transaction x, final Task t) {
 			System.out.println("handle cancel event");
